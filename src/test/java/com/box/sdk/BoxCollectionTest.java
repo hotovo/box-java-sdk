@@ -1,13 +1,16 @@
 package com.box.sdk;
 
-import java.util.Iterator;
-
 import static org.junit.Assert.assertEquals;
 
+import java.util.Iterator;
+
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import com.eclipsesource.json.JsonObject;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
 /**
  * {@link BoxCollection} related unit tests.
@@ -15,11 +18,17 @@ import com.eclipsesource.json.JsonObject;
 public class BoxCollectionTest {
 
     /**
+     * Wiremock
+     */
+    @Rule
+    public final WireMockRule wireMockRule = new WireMockRule(8080);
+
+    /**
      * Unit test for {@link BoxCollection#getAllCollections(BoxAPIConnection)}.
      */
     @Test
     @Category(UnitTest.class)
-    public void getCollectionsParsesAllFieldsCorrectly() {
+    public void testGetCollectionsParsesAllFieldsCorrectly() {
         final String id = "405151";
         final String name = "Favorites";
         final String collectionType = "favorites";
@@ -48,5 +57,110 @@ public class BoxCollectionTest {
         assertEquals(collectionType, collection.getCollectionType());
         assertEquals(false, iterator.hasNext());
     }
+
+    /**
+     * Unit test for {@link BoxCollection#getItems()}.
+     */
+    @Test
+    @Category(UnitTest.class)
+    public void testGetItemsParsesFieldsCorrectly() {
+        final String idFirst = "192429928";
+        final String sequenceIDFirst = "1";
+        final String etagFirst = "1";
+        final String nameFirst = "Stephen Curry Three Pointers";
+        final String idSecond = "818853862";
+        final String sequenceIDSecond = "0";
+        final String etagSecond = "0";
+        final String nameSecond = "Warriors.jpg";
+
+        BoxAPIConnection api = new BoxAPIConnection("");
+        api.setBaseURL("http://localhost:8080/");
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/collections/0/items/"))
+                .willReturn(WireMock.aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\n"
+                                + "    \"total_count\": 24,\n"
+                                + "    \"entries\": [\n"
+                                + "        {\n"
+                                + "            \"type\": \"folder\",\n"
+                                + "            \"id\": \"192429928\",\n"
+                                + "            \"sequence_id\": \"1\",\n"
+                                + "            \"etag\": \"1\",\n"
+                                + "            \"name\": \"Stephen Curry Three Pointers\"\n"
+                                + "        },\n"
+                                + "        {\n"
+                                + "            \"type\": \"file\",\n"
+                                + "            \"id\": \"818853862\",\n"
+                                + "            \"sequence_id\": \"0\",\n"
+                                + "            \"etag\": \"0\",\n"
+                                + "            \"name\": \"Warriors.jpg\"\n"
+                                + "        }\n"
+                                + "    ],\n"
+                                + "    \"offset\": 0,\n"
+                                + "    \"limit\": 2\n"
+                                + "}")));
+
+        BoxCollection collection = new BoxCollection(api, "0");
+        Iterator<BoxItem.Info> iterator = collection.getItems().iterator();
+        BoxItem.Info info = iterator.next();
+        assertEquals(idFirst, info.getID());
+        assertEquals(nameFirst, info.getName());
+        assertEquals(sequenceIDFirst, info.getSequenceID());
+        assertEquals(etagFirst, info.getEtag());
+        info = iterator.next();
+        assertEquals(idSecond, info.getID());
+        assertEquals(nameSecond, info.getName());
+        assertEquals(sequenceIDSecond, info.getSequenceID());
+        assertEquals(etagSecond, info.getEtag());
+        assertEquals(false, iterator.hasNext());
+    }
+    
+    /**
+     * Unit test for {@link BoxCollection#getItems(String...)}.
+     */
+    @Test
+    @Category(UnitTest.class)
+    public void testGetItemsRequestCorrectFields() {
+        BoxAPIConnection api = new BoxAPIConnection("");
+        api.setBaseURL("http://localhost:8080/");
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/collections/0/items/"))
+                .withQueryParam("fields", WireMock.containing("name"))
+                .withQueryParam("fields", WireMock.containing("description"))
+                .willReturn(WireMock.aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{}")));
+
+        BoxCollection collection = new BoxCollection(api, "0");
+        collection.getItems("name", "description");
+    }
+
+    /**
+     * Unit test for {@link BoxCollection#getItemsRange(long, long, String...)}.
+     */
+    @Test
+    @Category(UnitTest.class)
+    public void testGetItemsRangeRequestsCorrectOffsetLimitAndFields() {
+        BoxAPIConnection api = new BoxAPIConnection("");
+        api.setBaseURL("http://localhost:8080/");
+
+        WireMock.stubFor(WireMock.get(WireMock.urlPathEqualTo("/collections/0/items/"))
+                .withQueryParam("offset", WireMock.equalTo("0"))
+                .withQueryParam("limit", WireMock.equalTo("2"))
+                .withQueryParam("fields", WireMock.containing("name"))
+                .withQueryParam("fields", WireMock.containing("description"))
+                .willReturn(WireMock.aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("{\"total_count\": 3, \"entries\":[]}")));
+
+        BoxCollection collection = new BoxCollection(api, "0");
+        PartialCollection<BoxItem.Info> items = collection.getItemsRange(0, 2, "name", "description");
+        assertEquals(3L, items.fullSize());
+        assertEquals(0, items.offset());
+        assertEquals(2L, items.limit());
+
+    }
+
 
 }
