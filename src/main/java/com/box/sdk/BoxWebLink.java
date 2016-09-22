@@ -22,8 +22,8 @@ public class BoxWebLink extends BoxItem {
      * An array of all possible weblink fields that can be requested when calling {@link #getInfo()}.
      */
     public static final String[] ALL_FIELDS = {"type", "id", "sequence_id", "etag", "name", "url", "description",
-            "path_collection", "created_at", "modified_at", "trashed_at", "purged_at", "created_by", "modified_by",
-            "owned_by", "shared_link", "parent", "item_status"};
+        "path_collection", "created_at", "modified_at", "trashed_at", "purged_at", "created_by", "modified_by",
+        "owned_by", "shared_link", "parent", "item_status"};
 
     private static final URLTemplate COPY_URL_TEMPLATE = new URLTemplate("web_links/%s/copy");
     private static final URLTemplate WEB_LINK_URL_TEMPLATE = new URLTemplate("web_links/%s");
@@ -173,43 +173,50 @@ public class BoxWebLink extends BoxItem {
 
     /**
      * Creates new weblink with given params.
+     * @param api BoxAPIConnection used to create new weblink.
      * @param webLinkURL URL you want the web link to point to. Must include http:// or https://.
      * @param parentFolderID The ID of the parent folder where you're creating the web link.
      * @return Info about created weblink.
      */
-    public static BoxWebLink.Info createWebLink(BoxAPIConnection api, String webLinkURL, String parentFolderID) {
-        return createWebLink(api, webLinkURL, parentFolderID, "", "");
+    public static BoxWebLink.Info create(BoxAPIConnection api, String webLinkURL, String parentFolderID) {
+        return create(api, webLinkURL, parentFolderID, webLinkURL, "");
     }
 
     /**
      * Creates new weblink with given params.
+     * @param api BoxAPIConnection used to create new weblink.
      * @param webLinkURL URL you want the web link to point to. Must include http:// or https://.
      * @param parentFolderID The ID of the parent folder where you're creating the web link.
      * @param name Name for the web link.
      * @return Info about created weblink.
      */
-    public static BoxWebLink.Info createWebLink(BoxAPIConnection api, String webLinkURL, String parentFolderID, String name) {
-        return createWebLink(api, webLinkURL, parentFolderID, name, "");
+    public static BoxWebLink.Info create(BoxAPIConnection api, String webLinkURL, String parentFolderID, String name) {
+        return create(api, webLinkURL, parentFolderID, name, "");
     }
 
     /**
      * Creates new weblink with given params.
+     * @param api BoxAPIConnection used to create new weblink.
      * @param webLinkURL URL you want the web link to point to. Must include http:// or https://.
      * @param parentFolderID The ID of the parent folder where you're creating the web link.
      * @param name Name for the web link.
      * @param description Description of the web link. Will provide more context to users about the web link.
      * @return Info about created weblink.
      */
-    public static BoxWebLink.Info createWebLink(BoxAPIConnection api, String webLinkURL, String parentFolderID,
+    public static BoxWebLink.Info create(BoxAPIConnection api, String webLinkURL, String parentFolderID,
                                                 String name, String description) {
         URL url = WEB_LINK_CREATE_URL_TEMPLATE.build(api.getBaseURL());
         BoxJSONRequest request = new BoxJSONRequest(api, url, "POST");
         JsonObject requestJSON = new JsonObject();
         requestJSON.add("url", webLinkURL)
                 .add("parent", new JsonObject()
-                        .add("id", parentFolderID))
-                .add("name", name)
-                .add("description", description);
+                        .add("id", parentFolderID));
+        if (name != null) {
+            requestJSON.add("name", name);
+        }
+        if (description != null) {
+            requestJSON.add("description", description);
+        }
         request.setBody(requestJSON.toString());
         BoxJSONResponse response = (BoxJSONResponse) request.send();
         JsonObject responseJSON = JsonObject.readFrom(response.getJSON());
