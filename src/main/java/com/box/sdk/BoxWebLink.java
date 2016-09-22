@@ -10,7 +10,7 @@ import com.eclipsesource.json.JsonValue;
 /**
  * Represents an individual WebLink file on Box. This class can be used to retrieve the link's URL or perform other
  * common file operations (move, copy, delete, etc.).
- * <p>
+ *
  * <p>Unless otherwise noted, the methods in this class can throw an unchecked {@link BoxAPIException} (unchecked
  * meaning that the compiler won't force you to handle it) if an error occurs. If you wish to implement custom error
  * handling for errors related to the Box REST API, you should capture this exception explicitly.</p>
@@ -22,18 +22,16 @@ public class BoxWebLink extends BoxItem {
      * An array of all possible weblink fields that can be requested when calling {@link #getInfo()}.
      */
     public static final String[] ALL_FIELDS = {"type", "id", "sequence_id", "etag", "name", "url", "description",
-            "path_collection", "created_at", "modified_at", "trashed_at", "purged_at", "created_by", "modified_by",
-            "owned_by", "shared_link", "parent", "item_status"};
+        "path_collection", "created_at", "modified_at", "trashed_at", "purged_at", "created_by", "modified_by",
+        "owned_by", "shared_link", "parent", "item_status"};
 
     private static final URLTemplate COPY_URL_TEMPLATE = new URLTemplate("web_links/%s/copy");
     private static final URLTemplate WEB_LINK_URL_TEMPLATE = new URLTemplate("web_links/%s");
-    private static final URLTemplate WEB_LINK_CREATE_URL_TEMPLATE = new URLTemplate("web_links");
 
     /**
      * Constructs a BoxWebLink for a weblink with a given ID.
-     *
-     * @param api the API connection to be used by the weblink.
-     * @param id  the ID of the weblink.
+     * @param  api the API connection to be used by the weblink.
+     * @param  id  the ID of the weblink.
      */
     public BoxWebLink(BoxAPIConnection api, String id) {
         super(api, id);
@@ -41,7 +39,7 @@ public class BoxWebLink extends BoxItem {
 
     @Override
     public BoxSharedLink createSharedLink(BoxSharedLink.Access access, Date unshareDate,
-                                          BoxSharedLink.Permissions permissions) {
+        BoxSharedLink.Permissions permissions) {
 
         BoxSharedLink sharedLink = new BoxSharedLink(access, unshareDate, permissions);
         Info info = new Info();
@@ -115,7 +113,6 @@ public class BoxWebLink extends BoxItem {
 
     /**
      * Renames this weblink.
-     *
      * @param newName the new name of the weblink.
      */
     public void rename(String newName) {
@@ -150,16 +147,16 @@ public class BoxWebLink extends BoxItem {
 
     /**
      * Updates the information about this weblink with any info fields that have been modified locally.
-     * <p>
+     *
      * <p>The only fields that will be updated are the ones that have been modified locally. For example, the following
      * code won't update any information (or even send a network request) since none of the info's fields were
      * changed:</p>
-     * <p>
-     * <pre>BoxWebLink webLink = new BoxWebLink(api, id);
-     * BoxWebLink.Info info = webLink.getInfo();
-     * webLink.updateInfo(info);</pre>
      *
-     * @param info the updated info.
+     * <pre>BoxWebLink webLink = new BoxWebLink(api, id);
+     *BoxWebLink.Info info = webLink.getInfo();
+     *webLink.updateInfo(info);</pre>
+     *
+     * @param  info the updated info.
      */
     public void updateInfo(BoxWebLink.Info info) {
         URL url = WEB_LINK_URL_TEMPLATE.build(this.getAPI().getBaseURL(), this.getID());
@@ -169,52 +166,6 @@ public class BoxWebLink extends BoxItem {
         BoxJSONResponse response = (BoxJSONResponse) request.send();
         JsonObject jsonObject = JsonObject.readFrom(response.getJSON());
         info.update(jsonObject);
-    }
-
-    /**
-     * Creates new weblink with given params.
-     * @param webLinkURL URL you want the web link to point to. Must include http:// or https://.
-     * @param parentFolderID The ID of the parent folder where you're creating the web link.
-     * @return Info about created weblink.
-     */
-    public static BoxWebLink.Info createWebLink(BoxAPIConnection api, String webLinkURL, String parentFolderID) {
-        return createWebLink(api, webLinkURL, parentFolderID, "", "");
-    }
-
-    /**
-     * Creates new weblink with given params.
-     * @param webLinkURL URL you want the web link to point to. Must include http:// or https://.
-     * @param parentFolderID The ID of the parent folder where you're creating the web link.
-     * @param name Name for the web link.
-     * @return Info about created weblink.
-     */
-    public static BoxWebLink.Info createWebLink(BoxAPIConnection api, String webLinkURL, String parentFolderID, String name) {
-        return createWebLink(api, webLinkURL, parentFolderID, name, "");
-    }
-
-    /**
-     * Creates new weblink with given params.
-     * @param webLinkURL URL you want the web link to point to. Must include http:// or https://.
-     * @param parentFolderID The ID of the parent folder where you're creating the web link.
-     * @param name Name for the web link.
-     * @param description Description of the web link. Will provide more context to users about the web link.
-     * @return Info about created weblink.
-     */
-    public static BoxWebLink.Info createWebLink(BoxAPIConnection api, String webLinkURL, String parentFolderID,
-                                                String name, String description) {
-        URL url = WEB_LINK_CREATE_URL_TEMPLATE.build(api.getBaseURL());
-        BoxJSONRequest request = new BoxJSONRequest(api, url, "POST");
-        JsonObject requestJSON = new JsonObject();
-        requestJSON.add("url", webLinkURL)
-                .add("parent", new JsonObject()
-                        .add("id", parentFolderID))
-                .add("name", name)
-                .add("description", description);
-        request.setBody(requestJSON.toString());
-        BoxJSONResponse response = (BoxJSONResponse) request.send();
-        JsonObject responseJSON = JsonObject.readFrom(response.getJSON());
-        BoxWebLink createdWebLink = new BoxWebLink(api, responseJSON.get("id").asString());
-        return createdWebLink.new Info(responseJSON);
     }
 
     /**
@@ -233,8 +184,7 @@ public class BoxWebLink extends BoxItem {
 
         /**
          * Constructs an Info object by parsing information from a JSON string.
-         *
-         * @param json the JSON string to parse.
+         * @param  json the JSON string to parse.
          */
         public Info(String json) {
             super(json);
@@ -242,8 +192,7 @@ public class BoxWebLink extends BoxItem {
 
         /**
          * Constructs an Info object using an already parsed JSON object.
-         *
-         * @param jsonObject the parsed JSON object.
+         * @param  jsonObject the parsed JSON object.
          */
         public Info(JsonObject jsonObject) {
             super(jsonObject.toString());
@@ -256,7 +205,6 @@ public class BoxWebLink extends BoxItem {
 
         /**
          * Gets the description of this weblink.
-         *
          * @return the description of this weblink.
          */
         public String getDescription() {
@@ -265,7 +213,6 @@ public class BoxWebLink extends BoxItem {
 
         /**
          * Gets the URL this weblink points to.
-         *
          * @return the URL this weblink points to.
          */
         public URL getLinkURL() {
