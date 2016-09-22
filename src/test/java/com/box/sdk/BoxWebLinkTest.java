@@ -4,13 +4,48 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
+import com.eclipsesource.json.JsonObject;
 import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 public class BoxWebLinkTest {
+
+    @Test
+    @Category(UnitTest.class)
+    public void createWebLinkSendsCorrectJsonWithNameAndDescription() {
+        final String url = "http://";
+        final String parentFolderID = "0";
+        final String name = "non-empty name";
+        final String description = "non-empty description";
+
+        final JsonObject fakeJSONResponse = new JsonObject()
+                .add("type", "web_link")
+                .add("id", "0");
+
+        BoxAPIConnection api = new BoxAPIConnection("");
+        api.setRequestInterceptor(new JSONRequestInterceptor() {
+            @Override
+            protected BoxAPIResponse onJSONRequest(BoxJSONRequest request, JsonObject json) {
+                assertEquals(url, json.get("url").asString());
+                assertEquals(parentFolderID, json.get("parent").asObject().get("id").asString());
+                assertEquals(name, json.get("name").asString());
+                assertEquals(description, json.get("description").asString());
+
+                return new BoxJSONResponse() {
+                    @Override
+                    public String getJSON() {
+                        return fakeJSONResponse.toString();
+                    }
+                };
+            }
+        });
+
+        BoxWebLink.Info createdWebLinkInfo = BoxWebLink.createWebLink(api, url, parentFolderID, name, description);
+    }
 
     @Test
     @Category(IntegrationTest.class)
