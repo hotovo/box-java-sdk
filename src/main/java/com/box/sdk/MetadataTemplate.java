@@ -1,5 +1,7 @@
 package com.box.sdk;
 
+import java.net.URL;
+
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
@@ -11,6 +13,12 @@ import com.eclipsesource.json.JsonValue;
  * https://docs.box.com/reference#metadata-templates
  */
 public class MetadataTemplate extends BoxJSONObject {
+    private static final URLTemplate METADATA_TEMPLATE_URL_TEMPLATE
+            = new URLTemplate("metadata_templates/%s/%s/schema");
+    private static final String DEFAULT_METADATA_TYPE = "properties";
+    private static final String GLOBAL_METADATA_SCOPE = "global";
+    private static final String ENTERPRISE_METADATA_SCOPE = "enterprise";
+
     /**
      * @see #getTemplateKey()
      */
@@ -110,6 +118,50 @@ public class MetadataTemplate extends BoxJSONObject {
         } else if (memberName.equals("fields")) {
             this.fields = value.asArray();
         }
+    }
+
+    /**
+     * Gets the metadata template of properties.
+     * @param api the API connection to be used.
+     * @return the metadata template returned from the server.
+     */
+    public static MetadataTemplate getMetadataTemplate(BoxAPIConnection api) {
+        return getMetadataTemplate(api, DEFAULT_METADATA_TYPE);
+    }
+
+    /**
+     * Gets the metadata template of specified template type.
+     * @param api the API connection to be used.
+     * @param templateName the metadata template type name.
+     * @return the metadata template returned from the server.
+     */
+    public static MetadataTemplate getMetadataTemplate(BoxAPIConnection api, String templateName) {
+        String scope = scopeBasedOnType(templateName);
+        return getMetadataTemplate(api, templateName, scope);
+    }
+
+    /**
+     * Gets the metadata template of specified template type.
+     * @param api the API connection to be used.
+     * @param templateName the metadata template type name.
+     * @param scope the metadata template scope (global or enterprise).
+     * @return the metadata template returned from the server.
+     */
+    public static MetadataTemplate getMetadataTemplate(BoxAPIConnection api, String templateName, String scope) {
+        URL url = METADATA_TEMPLATE_URL_TEMPLATE.build(api.getBaseURL(), scope, templateName);
+        BoxAPIRequest request = new BoxAPIRequest(api, url, "GET");
+        BoxJSONResponse response = (BoxJSONResponse) request.send();
+        return new MetadataTemplate(response.getJSON());
+    }
+
+    private static String scopeBasedOnType(String typeName) {
+        String scope;
+        if (typeName.equals(DEFAULT_METADATA_TYPE)) {
+            scope = GLOBAL_METADATA_SCOPE;
+        } else {
+            scope = ENTERPRISE_METADATA_SCOPE;
+        }
+        return scope;
     }
 
 }
