@@ -1,8 +1,9 @@
 package com.box.sdk;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
 
@@ -15,8 +16,20 @@ import com.eclipsesource.json.JsonValue;
 public class MetadataTemplate extends BoxJSONObject {
     private static final URLTemplate METADATA_TEMPLATE_URL_TEMPLATE
             = new URLTemplate("metadata_templates/%s/%s/schema");
+
+    /**
+     * Default metadata type to be used in query.
+     */
     private static final String DEFAULT_METADATA_TYPE = "properties";
+
+    /**
+     * Global metadata scope. Used by default if the metadata type is "properties"
+     */
     private static final String GLOBAL_METADATA_SCOPE = "global";
+
+    /**
+     * Enterprise metadata scope. Used by default if the metadata type is not "properties".
+     */
     private static final String ENTERPRISE_METADATA_SCOPE = "enterprise";
 
     /**
@@ -35,20 +48,19 @@ public class MetadataTemplate extends BoxJSONObject {
     private String displayName;
 
     /**
-     * @see #isHidden()
+     * @see #getIsHidden()
      */
     private Boolean isHidden;
 
     /**
      * @see #getFields()
      */
-    private JsonArray fields;
+    private List<Field> fields;
 
     /**
      * Constructs an empty metadata template.
      */
     public MetadataTemplate() {
-        super();
     }
 
     /**
@@ -59,6 +71,10 @@ public class MetadataTemplate extends BoxJSONObject {
         super(json);
     }
 
+    /**
+     * Constructs a metadate template from a JSON object.
+     * @param jsonObject the json encoded metadate template.
+     */
     MetadataTemplate(JsonObject jsonObject) {
         super(jsonObject);
     }
@@ -91,7 +107,7 @@ public class MetadataTemplate extends BoxJSONObject {
      * Gets is the metadata template hidden.
      * @return is the metadata template hidden.
      */
-    public Boolean isHidden() {
+    public Boolean getIsHidden() {
         return this.isHidden;
     }
 
@@ -99,10 +115,13 @@ public class MetadataTemplate extends BoxJSONObject {
      * Gets the iterable with all fields the metadata template contains.
      * @return the iterable with all fields the metadata template contains.
      */
-    public Iterable<JsonValue> getFields() {
+    public List<Field> getFields() {
         return this.fields;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     void parseJSONMember(JsonObject.Member member) {
         JsonValue value = member.getValue();
@@ -116,7 +135,10 @@ public class MetadataTemplate extends BoxJSONObject {
         } else if (memberName.equals("hidden")) {
             this.isHidden = value.asBoolean();
         } else if (memberName.equals("fields")) {
-            this.fields = value.asArray();
+            this.fields = new ArrayList<Field>();
+            for (JsonValue field: value.asArray()) {
+                this.fields.add(new Field(field.asObject()));
+            }
         }
     }
 
@@ -154,6 +176,11 @@ public class MetadataTemplate extends BoxJSONObject {
         return new MetadataTemplate(response.getJSON());
     }
 
+    /**
+     * Determines the metadata scope based on type.
+     * @param typeName type of the metadata.
+     * @return scope of the metadata.
+     */
     private static String scopeBasedOnType(String typeName) {
         String scope;
         if (typeName.equals(DEFAULT_METADATA_TYPE)) {
@@ -162,6 +189,122 @@ public class MetadataTemplate extends BoxJSONObject {
             scope = ENTERPRISE_METADATA_SCOPE;
         }
         return scope;
+    }
+
+    /**
+     * Class contains information about the metadata template field.
+     */
+    public class Field extends BoxJSONObject {
+
+        /**
+         * @see #getType()
+         */
+        private String type;
+
+        /**
+         * @see #getKey()
+         */
+        private String key;
+
+        /**
+         * @see #getDisplayName()
+         */
+        private String displayName;
+
+        /**
+         * @see #getIsHidden()
+         */
+        private Boolean isHidden;
+
+        /**
+         * @see #getOptions()
+         */
+        private List<String> options;
+
+        /**
+         * Constructs an empty metadata template.
+         */
+        public Field() {
+        }
+
+        /**
+         * Constructs a metadate template field from a JSON string.
+         * @param json the json encoded metadate template field.
+         */
+        public Field(String json) {
+            super(json);
+        }
+
+        /**
+         * Constructs a metadate template field from a JSON object.
+         * @param jsonObject the json encoded metadate template field.
+         */
+        Field(JsonObject jsonObject) {
+            super(jsonObject);
+        }
+
+        /**
+         * Gets the data type of the field's value.
+         * @return the data type of the field's value.
+         */
+        public String getType() {
+            return this.type;
+        }
+
+        /**
+         * Gets the key of the field.
+         * @return the key of the field.
+         */
+        public String getKey() {
+            return this.key;
+        }
+
+        /**
+         * Gets the display name of the field.
+         * @return the display name of the field.
+         */
+        public String getDisplayName() {
+            return this.displayName;
+        }
+
+        /**
+         * Gets is metadata template field hidden.
+         * @return is metadata template field hidden.
+         */
+        public Boolean getIsHidden() {
+            return this.isHidden;
+        }
+
+        /**
+         * Gets list of possible options for enum type of the field.
+         * @return list of possible options for enum type of the field.
+         */
+        public List<String> getOptions() {
+            return this.options;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        void parseJSONMember(JsonObject.Member member) {
+            JsonValue value = member.getValue();
+            String memberName = member.getName();
+            if (memberName.equals("type")) {
+                this.type = value.asString();
+            } else if (memberName.equals("key")) {
+                this.key = value.asString();
+            } else if (memberName.equals("displayName")) {
+                this.displayName = value.asString();
+            } else if (memberName.equals("hidden")) {
+                this.isHidden = value.asBoolean();
+            } else if (memberName.equals("options")) {
+                this.options = new ArrayList<String>();
+                for (JsonValue key: value.asArray()) {
+                    this.options.add(key.asObject().get("key").asString());
+                }
+            }
+        }
     }
 
 }

@@ -1,70 +1,67 @@
 package com.box.sdk;
 
-import static org.junit.Assert.assertEquals;
+import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
-
-import com.eclipsesource.json.JsonArray;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 
+/**
+ * {@link MetadataTemplate} related unit tests.
+ */
 public class MetadataTemplateTest {
+
+    /**
+     * Wiremock
+     */
     @Rule
     public final WireMockRule wireMockRule = new WireMockRule(8080);
 
+    /**
+     * Unit test for {@link MetadataTemplate#getMetadataTemplate(BoxAPIConnection)}.
+     */
     @Test
     @Category(UnitTest.class)
-    public void getMetadataTemplateSendsCorrectRequest() {
+    public void testGetMetadataTemplateSendsCorrectRequest() {
         BoxAPIConnection api = new BoxAPIConnection("");
         api.setBaseURL("http://localhost:8080/");
-        stubFor(get(urlMatching("/metadata_templates/global/properties/schema"))
-                .willReturn(aResponse()
+        WireMock.stubFor(WireMock.get(WireMock.urlMatching("/metadata_templates/global/properties/schema"))
+                .willReturn(WireMock.aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withBody("{\"id\": \"0\"}")));
 
         MetadataTemplate.getMetadataTemplate(api);
     }
 
+    /**
+     * Unit test for {@link MetadataTemplate#getMetadataTemplate(BoxAPIConnection)}.
+     */
     @Test
     @Category(UnitTest.class)
-    public void getMetadataTemplateParseAllFieldsCorrectly() {
+    public void testGetMetadataTemplateParseAllFieldsCorrectly() {
         final String templateKey = "productInfo";
         final String scope = "enterprise_12345";
         final String displayName = "Product Info";
         final Boolean isHidden = false;
-        final JsonArray fields = JsonArray.readFrom("[\n"
-                + "        {\n"
-                + "            \"type\": \"float\",\n"
-                + "            \"key\": \"skuNumber\",\n"
-                + "            \"displayName\": \"SKU Number\",\n"
-                + "            \"hidden\": false\n"
-                + "        },\n"
-                + "        {\n"
-                + "            \"type\": \"enum\",\n"
-                + "            \"key\": \"department\",\n"
-                + "            \"displayName\": \"Department\",\n"
-                + "            \"hidden\": false,\n"
-                + "            \"options\": [\n"
-                + "                {\n"
-                + "                    \"key\": \"Beauty\"\n"
-                + "                },\n"
-                + "                {\n"
-                + "                    \"key\": \"Accessories\"\n"
-                + "                }\n"
-                + "            ]\n"
-                + "        }\n"
-                + "    ]\n");
+        final String firstFieldType = "float";
+        final String firstFieldKey = "skuNumber";
+        final String firstFieldDisplayName = "SKU Number";
+        final Boolean firstFieldIsHidden = false;
+        final String secondFieldType = "enum";
+        final String secondFieldKey = "department";
+        final String secondFieldDisplayName = "Department";
+        final Boolean secondFieldIsHidden = false;
+        final String secondFieldFirstOption = "Beauty";
+        final String secondFieldSecondOption = "Accessories";
 
         BoxAPIConnection api = new BoxAPIConnection("");
         api.setBaseURL("http://localhost:8080/");
-        stubFor(get(urlMatching("/metadata_templates/global/properties/schema"))
-                .willReturn(aResponse()
+        WireMock.stubFor(WireMock.get(WireMock.urlMatching("/metadata_templates/global/properties/schema"))
+                .willReturn(WireMock.aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withBody("{\n"
                                 + "    \"templateKey\": \"productInfo\",\n"
@@ -96,10 +93,21 @@ public class MetadataTemplateTest {
                                 + "}")));
 
         MetadataTemplate template = MetadataTemplate.getMetadataTemplate(api);
-        assertEquals(templateKey, template.getTemplateKey());
-        assertEquals(scope, template.getScope());
-        assertEquals(displayName, template.getDisplayName());
-        assertEquals(isHidden, template.isHidden());
-        assertEquals(fields, template.getFields());
+        Assert.assertEquals(templateKey, template.getTemplateKey());
+        Assert.assertEquals(scope, template.getScope());
+        Assert.assertEquals(displayName, template.getDisplayName());
+        Assert.assertEquals(isHidden, template.getIsHidden());
+        List<MetadataTemplate.Field> templateFields = template.getFields();
+        Assert.assertEquals(firstFieldType, templateFields.get(0).getType());
+        Assert.assertEquals(firstFieldKey, templateFields.get(0).getKey());
+        Assert.assertEquals(firstFieldDisplayName, templateFields.get(0).getDisplayName());
+        Assert.assertEquals(firstFieldIsHidden, templateFields.get(0).getIsHidden());
+        Assert.assertEquals(secondFieldType, templateFields.get(1).getType());
+        Assert.assertEquals(secondFieldKey, templateFields.get(1).getKey());
+        Assert.assertEquals(secondFieldDisplayName, templateFields.get(1).getDisplayName());
+        Assert.assertEquals(secondFieldIsHidden, templateFields.get(1).getIsHidden());
+        Assert.assertEquals(secondFieldFirstOption, templateFields.get(1).getOptions().get(0));
+        Assert.assertEquals(secondFieldSecondOption, templateFields.get(1).getOptions().get(1));
+
     }
 }
