@@ -10,10 +10,13 @@ import com.eclipsesource.json.JsonValue;
 /**
  * The MetadataTemplate class represents one type instance of Box metadata template.
  *
- * Learn more about Box metadata templates:
- * https://docs.box.com/reference#metadata-templates
+ * @see <a href="https://docs.box.com/reference#metadata-templates">Box metadata templates</a>
  */
 public class MetadataTemplate extends BoxJSONObject {
+
+    /**
+     * @see #getMetadataTemplate(BoxAPIConnection)
+     */
     private static final URLTemplate METADATA_TEMPLATE_URL_TEMPLATE
             = new URLTemplate("metadata_templates/%s/%s/schema");
 
