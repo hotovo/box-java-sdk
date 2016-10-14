@@ -225,6 +225,7 @@ public class MetadataTemplate extends BoxJSONObject {
          * Constructs an empty metadata template.
          */
         public Field() {
+            super();
         }
 
         /**
