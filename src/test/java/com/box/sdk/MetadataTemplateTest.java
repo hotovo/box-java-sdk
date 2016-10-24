@@ -22,7 +22,7 @@ public class MetadataTemplateTest {
     public final WireMockRule wireMockRule = new WireMockRule(8080);
 
     /**
-     * Unit test for {@link MetadataTemplate#getMetadataTemplate(BoxAPIConnection)}.
+     * Unit test for {@link MetadataTemplate#getMetadataTemplate(BoxAPIConnection, String, String, String...)}.
      */
     @Test
     @Category(UnitTest.class)
